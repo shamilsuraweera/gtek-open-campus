@@ -1,2 +1,9 @@
-# app/models/__init__.py
-from .user import User  # noqa: F401
+from app.db.base import Base
+from app.models.user import User
+from app.models.student import Student
+from app.models.course import Course
+from app.models.enrollment import Enrollment
+from app.models.session import Session
+from app.models.attendance import Attendance
+from app.models.assessment import Assessment
+from app.models.grade import Grade

@@ -1,9 +1,24 @@
-# app/main.py
 from fastapi import FastAPI
 from app.config import settings
+from app.api import auth, users, students, courses, enrollments, sessions, attendance, gradebook, reporting
 
-app = FastAPI(title="GTEK Open Campus API")
+app = FastAPI(title="GTEK Open Campus API", version="0.1.0")
+
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(students.router, prefix="/api/v1")
+app.include_router(courses.router, prefix="/api/v1")
+app.include_router(enrollments.router, prefix="/api/v1")
+app.include_router(sessions.router, prefix="/api/v1")
+app.include_router(attendance.router, prefix="/api/v1")
+app.include_router(gradebook.router, prefix="/api/v1")
+app.include_router(reporting.router, prefix="/api/v1")
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def root():
-    return {"message": "GTEK Open Campus API is running", "database": settings.DATABASE_URL}
+    return FileResponse("static/index.html")
