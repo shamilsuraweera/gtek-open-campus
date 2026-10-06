@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
 
 class AssessmentBase(BaseModel):
     course_id: int
@@ -12,20 +12,20 @@ class AssessmentCreate(AssessmentBase):
 
 class AssessmentResponse(AssessmentBase):
     id: int
-    class Config:
-        from_attributes = True
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class GradeBase(BaseModel):
     assessment_id: int
     student_id: int
     score: float
-    feedback: str | None = None
+    feedback: Optional[str] = None
 
 class GradeCreate(GradeBase):
     pass
 
 class GradeResponse(GradeBase):
     id: int
-    audit_log: str | None = None
-    class Config:
-        from_attributes = True
+    audit_log: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)

@@ -1,12 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class AttendanceBase(BaseModel):
     session_id: int
     student_id: int
     status: str
-    audit_notes: str | None = None
+    audit_notes: Optional[str] = None
 
 class AttendanceCreate(AttendanceBase):
     pass
@@ -19,5 +19,4 @@ class AttendanceResponse(AttendanceBase):
     id: int
     date: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

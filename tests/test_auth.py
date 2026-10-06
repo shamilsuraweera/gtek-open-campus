@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 def test_read_main(client: TestClient):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "GTEK Open Campus API is running"}
+    assert "text/html" in response.headers.get("content-type", "")
 
 def test_create_user(client: TestClient):
     response = client.post(

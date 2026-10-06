@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from typing import Optional
 
 class EnrollmentBase(BaseModel):
     student_id: int
@@ -12,7 +13,8 @@ class EnrollmentCreate(EnrollmentBase):
 class EnrollmentResponse(EnrollmentBase):
     id: int
     enrolled_at: datetime
+    student_name: Optional[str] = None
+    course_title: Optional[str] = None
+    course_code: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)

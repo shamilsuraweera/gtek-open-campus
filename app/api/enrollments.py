@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List
+from typing import List, Optional
 import csv
 import io
 
@@ -14,7 +14,7 @@ from app.schemas.enrollment import EnrollmentCreate, EnrollmentResponse
 
 router = APIRouter(prefix="/enrollments", tags=["enrollments"])
 
-@router.post("/", response_model=EnrollmentResponse)
+@router.post("/", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
 def create_enrollment(
     enrollment: EnrollmentCreate, 
     db: Session = Depends(get_db), 
@@ -38,7 +38,7 @@ def create_enrollment(
         Enrollment.course_id == enrollment.course_id
     ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Student already enrolled in this course")
+        raise HTTPException(status_code=400, detail="Student is already enrolled in this course")
 
     # Check capacity
     current_enrollments = db.query(func.count(Enrollment.id)).filter(
@@ -57,7 +57,18 @@ def create_enrollment(
     db.add(new_enrollment)
     db.commit()
     db.refresh(new_enrollment)
-    return new_enrollment
+    
+    # Enrich response
+    return EnrollmentResponse(
+        id=new_enrollment.id,
+        student_id=new_enrollment.student_id,
+        course_id=new_enrollment.course_id,
+        status=new_enrollment.status,
+        enrolled_at=new_enrollment.enrolled_at,
+        student_name=f"{student.first_name} {student.last_name}",
+        course_title=course.title,
+        course_code=course.code
+    )
 
 @router.post("/bulk-import")
 def bulk_import_enrollments(
@@ -86,7 +97,6 @@ def bulk_import_enrollments(
             errors.append(f"Row {row_num}: Missing student_id or course_id")
             continue
             
-        # Basic check
         existing = db.query(Enrollment).filter_by(student_id=student_id, course_id=course_id).first()
         if existing:
             continue
@@ -99,6 +109,47 @@ def bulk_import_enrollments(
     return {"message": "Bulk import complete", "success_count": success_count, "errors": errors}
 
 @router.get("/", response_model=List[EnrollmentResponse])
-def get_enrollments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return db.query(Enrollment).offset(skip).limit(limit).all()
+def get_enrollments(
+    course_id: Optional[int] = None,
+    student_id: Optional[int] = None,
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Enrollment, Student, Course).join(Student, Enrollment.student_id == Student.id).join(Course, Enrollment.course_id == Course.id)
+    if course_id:
+        query = query.filter(Enrollment.course_id == course_id)
+    if student_id:
+        query = query.filter(Enrollment.student_id == student_id)
+        
+    results = query.offset(skip).limit(limit).all()
+    out = []
+    for enr, stu, crs in results:
+        out.append(EnrollmentResponse(
+            id=enr.id,
+            student_id=enr.student_id,
+            course_id=enr.course_id,
+            status=enr.status,
+            enrolled_at=enr.enrolled_at,
+            student_name=f"{stu.first_name} {stu.last_name}",
+            course_title=crs.title,
+            course_code=crs.code
+        ))
+    return out
 
+@router.delete("/{enrollment_id}", status_code=status.HTTP_200_OK)
+def delete_enrollment(
+    enrollment_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_active_user)
+):
+    if current_user.role not in ["admin", "teacher"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+        
+    enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+        
+    db.delete(enrollment)
+    db.commit()
+    return {"message": f"Enrollment #{enrollment_id} successfully deleted"}

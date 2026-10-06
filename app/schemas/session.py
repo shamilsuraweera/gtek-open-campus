@@ -1,11 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from typing import Optional
 
 class SessionBase(BaseModel):
     course_id: int
     start_time: datetime
     end_time: datetime
-    location: str | None = None
+    location: Optional[str] = None
 
 class SessionCreate(SessionBase):
     pass
@@ -13,5 +14,4 @@ class SessionCreate(SessionBase):
 class SessionResponse(SessionBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
