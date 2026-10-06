@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.config import settings
-from app.api import auth, users, students, courses, enrollments, sessions, attendance
+from app.api import auth, users, students, courses, enrollments, sessions, attendance, gradebook
 
 app = FastAPI(title="GTEK Open Campus API", version="0.1.0")
 
@@ -11,6 +11,7 @@ app.include_router(courses.router, prefix="/api/v1")
 app.include_router(enrollments.router, prefix="/api/v1")
 app.include_router(sessions.router, prefix="/api/v1")
 app.include_router(attendance.router, prefix="/api/v1")
+app.include_router(gradebook.router, prefix="/api/v1")
 
 @app.get("/")
 def root():

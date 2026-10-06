@@ -5,3 +5,5 @@ from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.session import Session
 from app.models.attendance import Attendance
+from app.models.assessment import Assessment
+from app.models.grade import Grade
