@@ -14,6 +14,11 @@ app.include_router(attendance.router, prefix="/api/v1")
 app.include_router(gradebook.router, prefix="/api/v1")
 app.include_router(reporting.router, prefix="/api/v1")
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.get("/")
 def root():
-    return {"message": "GTEK Open Campus API is running"}
+    return FileResponse("static/index.html")
